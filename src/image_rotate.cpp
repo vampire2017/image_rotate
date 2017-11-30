@@ -20,24 +20,49 @@ double ImageRotate::detectDegree(cv::Mat img)
 	//【1】将原图像转换为灰度图像
 	cv::cvtColor( img, output_gray, CV_BGR2GRAY );
 
-	std::cout << "test..." << img.type() << std::endl;
-
 	//【2】先用使用 3x3内核来降噪
 	cv::blur( output_gray, output_img, cv::Size(3,3) );
 
 	//【3】执行Canny边缘检测
 	cv::Canny( output_img, output_img, 50, 150, 3 );
 
+	// 对边缘图像提取轮廓信息
+	std::vector<std::vector<cv::Point> >contours;
+	std::vector<cv::Vec4i> hierarchy;
+	cv::findContours(output_img, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+	std::cout << "2..." << std::endl;
+
+	cv::Mat contours_image = cv::Mat::zeros(img.size(),CV_8UC1); ;
+	//画出轮廓
+	cv::drawContours(contours_image, contours, -1, cv::Scalar(255, 0, 255));
+	cv::imshow("contours", contours_image);
+	std::cout << "3..." << std::endl;
+	cv::waitKey(0);
+
 	//【4】执行概率霍夫线变换，检测直线
 	std::vector< cv::Vec4i > lines;  //定义一个矢量结构lines用于存放得到的线段矢量集合
 	double minLineLength = std::min(output_img.cols, output_img.rows) * 0.02; //最短线长度
-	double maxLineGap = std::min(output_img.cols, output_img.rows) * 0.03 ; //最小线间距
+	double maxLineGap = std::min(output_img.cols, output_img.rows) * 0.02 ; //最小线间距
+
 	int threshold = 100;
+	// test
+	std::cout << "minLineLength:= " << minLineLength << std::endl;
+	std::cout << "maxLineGap:= " << maxLineGap << std::endl;
+
 	cv::HoughLinesP( output_img, lines, 1, M_PI/180, threshold, minLineLength, maxLineGap );
 
-	if ( lines.empty() )
-		return 1000.0;
-	std::cout << "num:= " << lines.size() << std::endl;
+	std::cout << "num lines:= " << lines.size() << std::endl;
+
+	int tmp_iter = 0;
+	while ( lines.empty() )
+	{
+		threshold = threshold - 2;
+		cv::HoughLinesP( output_img, lines, 1, M_PI/180, threshold, minLineLength, maxLineGap );
+		tmp_iter++;
+		std::cout << "threshold: " << threshold << std::endl;
+		if ( 15 == tmp_iter)
+			return 1000.0;
+	}
 
 	//【6】筛选直线
 	int x_s, y_s, x_e, y_e;
@@ -75,7 +100,7 @@ double ImageRotate::detectDegree(cv::Mat img)
 	          cv::Point(best_line_test[2],best_line_test[3]),
 	          cv::Scalar(186,88,255), 4, CV_AA);
 	cv::imshow("HoughLinesP..",output_img);
-	cvWaitKey(0);  //@todo
+	cv::waitKey(0);  //@todo
 
 	//【7】计算旋转角度  °C
 	double rotating_angle;
@@ -168,7 +193,8 @@ nav_msgs::OccupancyGrid ImageRotate::receiveMapDataCallback( const nav_msgs::Occ
 	/********************修改图片**************************/
 	cv::Mat img_rotate = cv::imread( mapdatafile );
 
-	double degree = detectDegree( img_rotate );
+	double degree = detectDegree( img_rotate.clone() );
+	std::cout << "degree: " << degree << std::endl;
 	if ( degree != 1000.0 )
 		rotateImage( img_rotate,  degree );
 	else

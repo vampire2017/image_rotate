@@ -214,3 +214,11 @@ target_link_libraries(image_rotate_save
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+add_executable(read_video
+        src/read_video.cpp
+        )
+
+target_link_libraries(read_video
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        )
