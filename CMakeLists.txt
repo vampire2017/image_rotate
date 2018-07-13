@@ -13,7 +13,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
         map_server
-)
+        geometry_msgs
+        tf
+        )
 
 find_package(OpenCV REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
@@ -199,6 +201,7 @@ include_directories(
 add_executable(image_rotate_save
         src/image_rotate_lib.cpp
         src/image_rotate.cpp
+        include/image_rotate/image_rotate.h
         )
 
 target_link_libraries(image_rotate_save

@@ -17,6 +17,9 @@
 #include "tf/LinearMath/Matrix3x3.h"
 #include "map_server/image_loader.h"
 #include "nav_msgs/MapMetaData.h"
+#include <tf/transform_datatypes.h>
+
+#include "image_rotate/cut_map.h"
 
 class ImageRotate
 {
@@ -27,20 +30,33 @@ public:
 
 	double detectDegree( cv::Mat img );
 
-	nav_msgs::OccupancyGrid receiveMapDataCallback( const nav_msgs::OccupancyGridConstPtr& map, double &x_, double &y_, double &th_ );
+	nav_msgs::OccupancyGrid receiveMapDataCallback( nav_msgs::OccupancyGrid& map, double &x_, double &y_, double &th_ );
 
-//  // for test
-//	nav_msgs::GetMap::Response map_resp_;  //返回修改后的map:.map
-//	ros::NodeHandle n;
-//	ros::Publisher map_pub;
-private:
+	void MapSave( const nav_msgs::OccupancyGrid& map );
+	void YamlSave( const nav_msgs::OccupancyGrid& map );
+
+
+	// for test
+	nav_msgs::GetMap::Response map_resp_;  //返回修改后的map:.map
+	ros::NodeHandle n;
+
+	ros::Publisher map_pub_cut;
+	ros::Publisher map_pub;
+	ros::Publisher point_pub_src;
+	ros::Publisher point_pub_dist;
+	ros::Publisher point_axis;
+
 	cv::Point2f center;
+
+private:
 	double scale;
 	bool saved_map_;
 //	std::string mapname_;  //保存图片的位置 test
 	std::string mapdatafile;  //保存图片的位置pgm
 	std::string mapmetadatafile;  //保存图片配置文件的位置yaml
-	nav_msgs::GetMap::Response map_resp_;  //返回修改后的map:.map
+//	nav_msgs::GetMap::Response map_resp_;  //返回修改后的map:.map
+
+	CutMap cutMap_;
 };
 
 
